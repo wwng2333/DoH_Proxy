@@ -22,10 +22,15 @@ $http_worker = new Worker("http://0.0.0.0:2345");
 # 
 ```
 install requirement:
+Ubuntu 20.04:
 ```
-#Ubuntu 20.04
 apt update
 apt install php7.4-cli php7.4-curl composer -y
+```
+Fedora 37:
+```
+dnf update
+dnf install php-cli php-json composer
 ```
 then
 ```bash
