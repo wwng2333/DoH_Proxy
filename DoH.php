@@ -48,11 +48,10 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 		], $res);
 		return $connection->close($response);
 	} 
-	else if(stristr($request->uri(), '/dns-query?')) 
+	else if(stristr($request->uri(), ENDPOINT_PATH.'?')) 
 	{
 		$t = explode('dns-query', $request->uri());
 		$query_url = DOH_UPSTREAM.$t[1];
-		
 		switch(strtolower($request->header('accept')))
 		{
 			case "application/dns-json":
@@ -66,10 +65,8 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 			
 			default: return $connection->close($response_400);
 		}
-		
 		if(!empty($is_json)) $header = array(["Content-Type: application/json; charset=UTF-8"]);
 		else $header = array(["Content-Type: application/dns-message"]);
-
 		$response = new Response(200, $header, $out);
 		return $connection->close($response);
 	} 
