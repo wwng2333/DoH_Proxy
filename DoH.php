@@ -3,9 +3,10 @@ use Workerman\Worker;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
+use WpOrg\Requests\Requests;
 
 require_once __DIR__ . '/vendor/autoload.php';
-define('DOH_UPSTREAM', 'https://1.1.1.1/dns-query');
+define('DOH_UPSTREAM', 'https://223.6.6.6/dns-query');
 define('ENDPOINT_PATH', '/dns-query');
 define('START_MODE', 'HTTPS'); //HTTP or HTTPS
 define('DEBUG', 1);
@@ -29,61 +30,34 @@ if(START_MODE == 'HTTPS')
 $http_worker->count = 4;
 $http_worker->name = 'DoH Proxy';
 $http_worker->onMessage = function(TcpConnection $connection, Request $request)
-{	
+{
 	if(DEBUG) printf("recv:%s, %s at %s\n", $request->method(), $request->header('accept'), $request->uri());
-	$response_400 = new Response(400, [
-			'Content-Type' => 'text/plain; charset=utf-8'
-		], 'Bad Request');
 	if($request->uri()==ENDPOINT_PATH and !empty($request->rawBody()))
 	{
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_URL, DOH_UPSTREAM);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curl, CURLOPT_POSTFIELDS, $request->rawBody());
-		curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-Type: application/dns-message"));
-		$res = curl_exec($curl);
-		curl_close($curl);
-		$response = new Response(200, [
-			'Content-Type' => 'application/dns-message'
-		], $res);
-		return $connection->close($response);
+		$post = Requests::post(DOH_UPSTREAM, ['Accept' => 'application/dns-message'], $request->rawBody());
+		return $connection->close(new Response(200, ['Content-Type' => 'application/dns-message'], $post->body));
 	} 
 	else if(stristr($request->uri(), ENDPOINT_PATH.'?')) 
 	{
-		$t = explode('dns-query', $request->uri());
-		$query_url = DOH_UPSTREAM.$t[1];
 		switch(strtolower($request->header('accept')))
 		{
 			case "application/dns-json":
-				$is_json = 1;
-				$out = dns_query($query_url, 'json');
+				$Request_header = ['Accept' => 'application/json'];
+				$Return_header = ["Content-Type' => 'application/json; charset=UTF-8"];
 			break;
-			
-			case "application/dns-message":
-				$out = dns_query($query_url, 'dns');
-			break;
-			
-			default: return $connection->close($response_400);
-		}
-		if(!empty($is_json)) $header = array(["Content-Type: application/json; charset=UTF-8"]);
-		else $header = array(["Content-Type: application/dns-message"]);
-		$response = new Response(200, $header, $out);
-		return $connection->close($response);
-	} 
-	else return $connection->close($response_400);
-};
 
-function dns_query($url, $method)
-{
-	$headerArray = ($method == 'dns') ? array("Accept: application/dns-message") : array("Accept: application/dns-json");
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $url);
-	curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1000);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-	curl_setopt($ch, CURLOPT_HTTPHEADER, $headerArray);
-	$output = curl_exec($ch);
-	curl_close($ch);
-	return $output;
-}
+			case "application/dns-message":
+				$Request_header = ['Accept' => 'application/dns-message'];
+				$Return_header = ['Content-Type' => 'application/dns-message'];
+			break;
+
+			default: break;
+		}
+		$t = explode('dns-query', $request->uri());
+		$res = Requests::get(DOH_UPSTREAM.$t[1], $Request_header);
+		return $connection->close(new Response(200, $Return_header, $res->body));
+	}
+	return $connection->close(new Response(400, ['Content-Type' => 'text/plain; charset=utf-8'], 'Bad Request'));
+};
 
 Worker::runAll();
