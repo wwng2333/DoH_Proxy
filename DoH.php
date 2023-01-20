@@ -34,8 +34,7 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 	if($request->method()== 'POST' and $request->uri()==ENDPOINT_PATH and !empty($request->rawBody()))
 	{
 		if(DEBUG) printf("POST %s %s\n", $request->header('accept'), base64_encode($request->rawBody()));
-		$post = Requests::post(DOH_UPSTREAM, ['Accept' => $request->header('accept')], $request->rawBody());
-		//$post = Requests::get(DOH_UPSTREAM.'?dns='.base64_encode($request->rawBody()), ['Accept' => $request->header('accept')]);
+		$post = Requests::post(DOH_UPSTREAM, ['accept' => $request->header('accept'), 'content-type' => $request->header('content-type')], $request->rawBody());
 		if(DEBUG) printf("recv %s\n", base64_encode($post->body));
 		return $connection->close(new Response(200, ['Content-Type' => $request->header('accept')], $post->body));
 	} 
