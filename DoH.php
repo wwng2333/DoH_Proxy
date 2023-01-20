@@ -34,27 +34,15 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 	if(DEBUG) printf("recv:%s, %s at %s\n", $request->method(), $request->header('accept'), $request->uri());
 	if($request->uri()==ENDPOINT_PATH and !empty($request->rawBody()))
 	{
-		$post = Requests::post(DOH_UPSTREAM, ['Accept' => 'application/dns-message'], $request->rawBody());
-		return $connection->close(new Response(200, ['Content-Type' => 'application/dns-message'], $post->body));
+		$post = Requests::post(DOH_UPSTREAM, ['Accept' => $request->header('accept')], $request->rawBody());
+		return $connection->close(new Response(200, ['Content-Type' => $request->header('accept')], $post->body));
 	} 
-	else if(stristr($request->uri(), ENDPOINT_PATH.'?')) 
+	else if(stristr($request->uri(), ENDPOINT_PATH.'?') and !empty($request->header('accept')))
 	{
-		switch(strtolower($request->header('accept')))
-		{
-			case "application/dns-json":
-				$Request_header = ['Accept' => 'application/json'];
-				$Return_header = ["Content-Type' => 'application/json; charset=UTF-8"];
-			break;
-
-			case "application/dns-message":
-				$Request_header = ['Accept' => 'application/dns-message'];
-				$Return_header = ['Content-Type' => 'application/dns-message'];
-			break;
-
-			default: break;
-		}
+		$Return_header = ['Content-Type' => $request->header('accept')];
+		if(stristr($request->header('accept'), 'json')) $Return_header['Content-Type'] .= '; charset=utf-8';
 		$t = explode('dns-query', $request->uri());
-		$res = Requests::get(DOH_UPSTREAM.$t[1], $Request_header);
+		$res = Requests::get(DOH_UPSTREAM.$t[1], ['Accept' => $request->header('accept')]);
 		return $connection->close(new Response(200, $Return_header, $res->body));
 	}
 	return $connection->close(new Response(400, ['Content-Type' => 'text/plain; charset=utf-8'], 'Bad Request'));
