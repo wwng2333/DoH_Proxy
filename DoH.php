@@ -35,7 +35,7 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 	if($request->uri()==ENDPOINT_PATH and !empty($request->rawBody()))
 	{
 		$post = Requests::post(DOH_UPSTREAM, ['Accept' => $request->header('accept')], $request->rawBody());
-		return $connection->close(new Response(200, ['Content-Type' => $request->header('accept')], $post->body));
+		return $connection->send(new Response(200, ['Content-Type' => $request->header('accept')], $post->body));
 	} 
 	else if(stristr($request->uri(), ENDPOINT_PATH.'?') and !empty($request->header('accept')))
 	{
@@ -43,7 +43,7 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 		if(stristr($request->header('accept'), 'json')) $Return_header['Content-Type'] .= '; charset=utf-8';
 		$t = explode('dns-query', $request->uri());
 		$res = Requests::get(DOH_UPSTREAM.$t[1], ['Accept' => $request->header('accept')]);
-		return $connection->close(new Response(200, $Return_header, $res->body));
+		return $connection->send(new Response(200, $Return_header, $res->body));
 	}
 	return $connection->close(new Response(400, ['Content-Type' => 'text/plain; charset=utf-8'], 'Bad Request'));
 };
