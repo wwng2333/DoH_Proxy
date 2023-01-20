@@ -27,23 +27,27 @@ if(START_MODE == 'HTTPS')
 	$http_worker = new Worker("http://0.0.0.0:2345");
 }
 
-$http_worker->count = 4;
+$http_worker->count = 10;
 $http_worker->name = 'DoH Proxy';
 $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 {
-	if(DEBUG) printf("recv:%s, %s at %s\n", $request->method(), $request->header('accept'), $request->uri());
-	if($request->uri()==ENDPOINT_PATH and !empty($request->rawBody()))
+	if($request->method()== 'POST' and $request->uri()==ENDPOINT_PATH and !empty($request->rawBody()))
 	{
+		if(DEBUG) printf("POST %s %s\n", $request->header('accept'), base64_encode($request->rawBody()));
 		$post = Requests::post(DOH_UPSTREAM, ['Accept' => $request->header('accept')], $request->rawBody());
-		return $connection->send(new Response(200, ['Content-Type' => $request->header('accept')], $post->body));
+		//$post = Requests::get(DOH_UPSTREAM.'?dns='.base64_encode($request->rawBody()), ['Accept' => $request->header('accept')]);
+		if(DEBUG) printf("recv %s\n", base64_encode($post->body));
+		return $connection->close(new Response(200, ['Content-Type' => $request->header('accept')], $post->body));
 	} 
-	else if(stristr($request->uri(), ENDPOINT_PATH.'?') and !empty($request->header('accept')))
+	else if($request->method() == 'GET' and stristr($request->uri(), ENDPOINT_PATH.'?') and !empty($request->header('accept')))
 	{
+		if(DEBUG) printf("GET %s %s\n", $request->header('accept'), $request->uri());
 		$Return_header = ['Content-Type' => $request->header('accept')];
 		if(stristr($request->header('accept'), 'json')) $Return_header['Content-Type'] .= '; charset=utf-8';
 		$t = explode('dns-query', $request->uri());
-		$res = Requests::get(DOH_UPSTREAM.$t[1], ['Accept' => $request->header('accept')]);
-		return $connection->send(new Response(200, $Return_header, $res->body));
+		$get = Requests::get(DOH_UPSTREAM.$t[1], ['Accept' => $request->header('accept')]);
+		if(DEBUG) printf("recv %s\n", base64_encode($get->body));
+		return $connection->send(new Response(200, $Return_header, $get->body));
 	}
 	return $connection->close(new Response(400, ['Content-Type' => 'text/plain; charset=utf-8'], 'Bad Request'));
 };
