@@ -1,28 +1,26 @@
 # DoH_Proxy
 A simple DNS over HTTPS proxy based on workerman, support RFC1035 and RFC9230
-Start at HTTPS mode:
+Start mode:
 ```php
-#HTTPS mode
-$context = array(
-    'ssl' => array(
-        'local_cert'        => '/root/1.cer', // Edit the path of cer and key yourself.
-        'local_pk'          => '/root/1.key',
-        'verify_peer'       => false,
-        'allow_self_signed' => false, //if self-signed :true
-    )
-);
+define('START_MODE', 'HTTPS'); //HTTP or HTTPS
+...
+if(START_MODE == 'HTTPS')
+{
+	$context = array(
+		'ssl' => array(
+			'local_cert'        => '/root/1.cer', // 也可以是crt文件
+			'local_pk'          => '/root/1.key',
+			'verify_peer'       => false,
+			'allow_self_signed' => false, //如果是自签名证书需要开启此选项
+		)
+	);
+	$http_worker = new Worker('http://0.0.0.0:2345', $context);
+	$http_worker->transport = 'ssl';
+} else {
+	$http_worker = new Worker("http://0.0.0.0:2345");
+}
 ```
-HTTP mode: Use nginx or caddy to reverse proxy it.
-```php
-// HTTP mode
-$worker->onMessage = function(TcpConnection $con, $msg) {
-    $con->send('ok');
-};
-$http_worker = new Worker("http://0.0.0.0:2345");
-# 
-```
-install requirement:
-Ubuntu 20.04:
+install requirement on Ubuntu 20.04:
 ```
 apt update
 apt install php7.4-cli php7.4-curl composer -y
