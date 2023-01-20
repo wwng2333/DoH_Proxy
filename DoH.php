@@ -47,7 +47,7 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 		$t = explode('dns-query', $request->uri());
 		$get = Requests::get(DOH_UPSTREAM.$t[1], ['Accept' => $request->header('accept')]);
 		if(DEBUG) printf("recv %s\n", base64_encode($get->body));
-		return $connection->send(new Response(200, $Return_header, $get->body));
+		return $connection->send(new Response(200, ['Content-Type' => $get->headers['content-type']], $get->body));
 	}
 	return $connection->close(new Response(400, ['Content-Type' => 'text/plain; charset=utf-8'], 'Bad Request'));
 };
