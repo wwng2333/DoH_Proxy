@@ -1,7 +1,7 @@
 # DoH_Proxy
 A simple DNS over HTTPS proxy based on workerman, support RFC1035 and RFC9230
 
-#Start mode:
+# Start mode:
 ```php
 define('START_MODE', 'HTTPS'); //HTTP or HTTPS
 ...
@@ -21,7 +21,7 @@ if(START_MODE == 'HTTPS')
 	$http_worker = new Worker("http://0.0.0.0:2345");
 }
 ```
-#install requirement
+# install requirement
 Ubuntu 20.04:
 ```
 apt update
@@ -38,7 +38,7 @@ git clone https://github.com/wwng2333/DoH_Proxy.git
 composer install
 php DoH_Proxy/DoH.php start -d
 ```
-#Test 
+# Test 
 Tool: https://github.com/natesales/q
 ```
 root@OpenWrt:~# q @https://ip:port google.com
