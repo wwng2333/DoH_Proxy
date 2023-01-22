@@ -13,15 +13,14 @@ define('DEBUG', 1);
 
 if(START_MODE == 'HTTPS')
 {
-	$context = array(
+	$http_worker = new Worker('http://0.0.0.0:2345', array(
 		'ssl' => array(
 			'local_cert'        => '/root/1.cer', // 也可以是crt文件
 			'local_pk'          => '/root/1.key',
 			'verify_peer'       => false,
 			'allow_self_signed' => false, //如果是自签名证书需要开启此选项
 		)
-	);
-	$http_worker = new Worker('http://0.0.0.0:2345', $context);
+	));
 	$http_worker->transport = 'ssl';
 } else {
 	$http_worker = new Worker("http://0.0.0.0:2345");
@@ -33,15 +32,13 @@ $http_worker->onMessage = function(TcpConnection $connection, Request $request)
 {
 	if($request->method()== 'POST' and $request->uri()==ENDPOINT_PATH and !empty($request->rawBody()))
 	{
-		$res = Requests::post(DOH_UPSTREAM, ['accept' => $request->header('accept'), 'content-type' => $request->header('content-type')], $request->rawBody());
-		if(DEBUG) {
-			printf("POST %s %s\n", $request->header('accept'), base64_encode($request->rawBody()));
-			var_dump($res->headers);
-		}
+		$res = Requests::post(DOH_UPSTREAM, [
+			'accept' => $request->header('accept'),
+			'content-type' => $request->header('content-type')
+		], $request->rawBody());
 	} 
 	else if($request->method() == 'GET' and stristr($request->uri(), ENDPOINT_PATH.'?') and !empty($request->header('accept')))
 	{
-		//if(DEBUG) printf("GET %s %s\n", $request->header('accept'), $request->uri());
 		$t = explode('dns-query', $request->uri());
 		$res = Requests::get(DOH_UPSTREAM.$t[1], ['accept' => $request->header('accept')]);
 	}
