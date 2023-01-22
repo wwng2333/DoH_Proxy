@@ -7,8 +7,8 @@ use Workerman\Worker;
 use WpOrg\Requests\Requests;
 
 require_once __DIR__ . '/vendor/autoload.php';
-define('DOH_UPSTREAM', 'https://1.1.1.1/dns-query');
-#define('DOH_UPSTREAM', 'udp://223.6.6.6:53');
+#define('DOH_UPSTREAM', 'https://1.1.1.1/dns-query');
+define('DOH_UPSTREAM', 'udp://156.154.70.1');
 define('ENDPOINT_PATH', '/dns-query');
 define('START_MODE', 'HTTPS'); //HTTP or HTTPS
 define('DEBUG', 1);
@@ -39,13 +39,13 @@ $http_worker->onMessage = function (TcpConnection $connection, Request $request)
         $t_fin = base64_decode($t[1]);
     }
 
-    if ($url['scheme'] == 'udp') {
-        if (!isset($url['port']))
-            $url['port'] = 53;
-        $fp = fsockopen($url['scheme'] . '://' . $url['host'], $url['port'], $errno, $errstr, 1);
-        fwrite($fp, $t_fin);
+    if ($url['scheme'] == 'udp' and !empty($t_fin)) {
+        $port_attend = isset($url['port']) ? '' : ':53';
+        $fp = stream_socket_client(DOH_UPSTREAM . $port_attend, $errno, $errstr);
         stream_set_timeout($fp, 1);
+        fwrite($fp, $t_fin);
         $r_body = fread($fp, 8192);
+        fclose($fp);
         $r_flag = ($errno == 0) ? 1 : 0;
     } elseif (stristr($url['scheme'], 'http')) {
         $res = Requests::post(DOH_UPSTREAM, [
