@@ -1,5 +1,6 @@
 # DoH_Proxy
-A simple DNS over HTTPS proxy based on workerman, support RFC1035 and RFC9230
+A simple DNS over HTTPS proxy based on workerman, support RFC1035.
+RFC9230 is not avaliable since releases/tag/RFC9230.
 
 # Start mode:
 ```php
