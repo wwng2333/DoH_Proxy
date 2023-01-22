@@ -38,12 +38,13 @@ $http_worker->onMessage = function (TcpConnection $connection, Request $request)
         $t = explode('?dns=', $request->uri());
         $t_fin = base64_decode($t[1]);
     }
-    var_dump(base64_encode($t_fin));
+
     if ($url['scheme'] == 'udp') {
         if (!isset($url['port']))
             $url['port'] = 53;
-        $fp = fsockopen('udp://' . $url['host'], $url['port'], $errno, $errstr, 1);
+        $fp = fsockopen($url['scheme'] . '://' . $url['host'], $url['port'], $errno, $errstr, 1);
         fwrite($fp, $t_fin);
+        stream_set_timeout($fp, 1);
         $r_body = fread($fp, 8192);
         $r_flag = ($errno == 0) ? 1 : 0;
     } elseif (stristr($url['scheme'], 'http')) {
