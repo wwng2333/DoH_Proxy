@@ -24,7 +24,7 @@ if(START_MODE == 'HTTPS')
 }
 ```
 # install requirement
-# Alpine Linux 3.18
+Alpine Linux 3.18
 ```bash
 apk update
 apk add git composer php81-cli php81-posix php81-pcntl
