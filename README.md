@@ -24,6 +24,11 @@ if(START_MODE == 'HTTPS')
 }
 ```
 # install requirement
+# Alpine Linux 3.18
+```bash
+apk update
+apk add git composer php81-cli php81-posix php81-pcntl
+```
 Ubuntu 20.04:
 ```
 apt update
@@ -37,8 +42,9 @@ dnf install php-cli php-json composer
 then
 ```bash
 git clone https://github.com/wwng2333/DoH_Proxy.git
+cd DoH_Proxy
 composer install
-php DoH_Proxy/DoH.php start -d
+php DoH.php start -d
 ```
 # Test 
 Tool: https://github.com/natesales/q
